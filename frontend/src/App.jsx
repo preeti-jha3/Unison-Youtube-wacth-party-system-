@@ -39,8 +39,13 @@ export default function App() {
   // Create = ask the server for a new room code, then join it (first joiner becomes Host)
   const create = async (name) => {
     if (!name.trim()) return setError("Enter your name first");
-    const { roomId } = await (await fetch("/api/rooms", { method: "POST" })).json();
-    join(roomId, name);
+    try {
+      const base = import.meta.env.VITE_SERVER_URL || "";
+      const { roomId } = await (await fetch(`${base}/api/rooms`, { method: "POST" })).json();
+      join(roomId, name);
+    } catch (e) {
+      setError("Could not create room. Server may be waking up, try again in a few seconds.");
+    }
   };
 
   useEffect(() => {
