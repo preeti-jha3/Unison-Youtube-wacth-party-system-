@@ -1,9 +1,23 @@
 import { useState } from "react";
 
+// Accepts either a plain code (ABC123) or a full link (https://.../?room=ABC123)
+function extractCode(value) {
+  const v = value.trim();
+  try {
+    const room = new URL(v).searchParams.get("room");
+    if (room) return room.toUpperCase().slice(0, 6);
+  } catch {
+    // not a URL, treat as plain code
+  }
+  return v.toUpperCase().slice(0, 6);
+}
+
 export default function Lobby({ onCreate, onJoin, error }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState(new URLSearchParams(location.search).get("room") || "");
   const [tab, setTab] = useState(code ? "join" : "create");
+
+  const join = () => onJoin(extractCode(code), name);
 
   return (
     <main className="lobby">
@@ -23,11 +37,11 @@ export default function Lobby({ onCreate, onJoin, error }) {
         </>
       ) : (
         <>
-          <label>Room code
-            <input value={code} maxLength={6} onChange={(e) => setCode(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === "Enter" && onJoin(code, name)} placeholder="ABC123" />
+          <label>Room code or link
+            <input value={code} onChange={(e) => setCode(extractCode(e.target.value))}
+              onKeyDown={(e) => e.key === "Enter" && join()} placeholder="ABC123 or paste link" />
           </label>
-          <button className="btn primary" onClick={() => onJoin(code, name)}>Join room</button>
+          <button className="btn primary" onClick={join}>Join room</button>
         </>
       )}
       {error && <p className="error">{error}</p>}
